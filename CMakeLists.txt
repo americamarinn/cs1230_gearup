@@ -23,6 +23,9 @@ find_package(Qt6 REQUIRED COMPONENTS Xml)
 # Allows you to include files from within those directories, without prefixing their filepaths
 include_directories(src)
 
+include_directories(src/shapes)
+include_directories(src/utils)
+
 # Specifies .cpp and .h files to be passed to the compiler
 add_executable(${PROJECT_NAME}
     src/main.cpp
@@ -41,6 +44,11 @@ add_executable(${PROJECT_NAME}
     src/utils/sceneparser.h
     src/utils/shaderloader.h
     src/utils/aspectratiowidget/aspectratiowidget.hpp
+    src/utils/camera.h src/utils/camera.cpp
+    src/utils/cone.h src/utils/cone.cpp
+    src/utils/cube.h src/utils/cube.cpp
+    src/utils/cylinder.h src/utils/cylinder.cpp
+    src/utils/sphere.h src/utils/sphere.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`

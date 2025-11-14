@@ -1,5 +1,9 @@
 #version 330 core
 
-void main() {
+in vec3 vNor;
+out vec4 fragColor;
 
+void main() {
+    // debug: color = normal
+    fragColor = vec4(abs(normalize(vNor)), 1.0);
 }

@@ -13,6 +13,13 @@
 #include <QTime>
 #include <QTimer>
 
+#include <algorithm>          // for std::max
+#include "cylinder.h"
+#include "shaderloader.h"
+#include "camera.h"
+#include "scenedata.h"
+#include "sceneparser.h"
+
 class Realtime : public QOpenGLWidget
 {
 public:
@@ -49,4 +56,26 @@ private:
 
     // Device Correction Variables
     double m_devicePixelRatio;
+
+    GLuint m_shader = 0;   // shader program
+    GLuint m_vao    = 0;   // VAO for the cylinder
+    GLuint m_vbo    = 0;   // VBO with interleaved pos/normal
+    int    m_vertexCount = 0; // number of vertices in VBO
+
+    Cylinder m_cylinder;   // CPU-side mesh generator
+
+    // Helper that builds shader + VAO/VBO + uploads mesh
+    void initTestShape();
+    void updateCylinderFromSettings();
+
+
+
+    // Simple camera matrices for now
+    glm::mat4 m_view;
+    glm::mat4 m_proj;
+
+    Camera m_camera;
+
+    // Parsed scene data from lab 4
+    RenderData m_renderData;
 };
