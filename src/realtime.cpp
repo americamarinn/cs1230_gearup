@@ -57,10 +57,11 @@ void Realtime::loadScene() {
     }
 
     // Set up camera from scene data
-    glm::vec3 pos = glm::vec3(m_renderData.cameraData.pos);
-    glm::vec3 look = glm::vec3(m_renderData.cameraData.look);
-    glm::vec3 up = glm::vec3(m_renderData.cameraData.up);
-    m_camera.setViewMatrix(pos, look, up);
+    m_camera.setViewMatrix(
+        glm::vec3(m_renderData.cameraData.pos),    // Extract vec3 from vec4
+        glm::vec3(m_renderData.cameraData.look),   // Extract vec3 from vec4
+        glm::vec3(m_renderData.cameraData.up)      // Extract vec3 from vec4
+        );
 
     float aspect = (size().height() > 0) ? float(size().width()) / float(size().height()) : 1.f;
     m_camera.setProjectionMatrix(aspect, settings.nearPlane, settings.farPlane,
@@ -285,8 +286,10 @@ void Realtime::resizeGL(int w, int h) {
     // Students: anything requiring OpenGL calls when the program starts should be done here
 
     // Keep camera projection in sync with window size
-    const float fovY = 45.f * 3.1415926535f / 180.f;
     float aspect = (h > 0) ? float(w) / float(h) : 1.f;
+    float fovY = !m_renderData.shapes.empty()
+                     ? m_renderData.cameraData.heightAngle
+                     : 45.f * 3.1415926535f / 180.f;
 
     m_camera.setProjectionMatrix(
         aspect,

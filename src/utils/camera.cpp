@@ -20,26 +20,49 @@ void Camera::setViewMatrix(const glm::vec3 &pos,
     rebuildView();
 }
 
+// void Camera::rebuildView()
+// {
+//     // Build camera basis
+//     glm::vec3 w = -glm::normalize(m_look);        // forward (camera space +z)
+//     glm::vec3 u = glm::normalize(glm::cross(m_up, w)); // right
+//     glm::vec3 v = glm::cross(w, u);               // true up
+
+//     glm::mat4 V(1.f);
+
+//     // Columns because GLM is column-major
+//     V[0] = glm::vec4(u, 0.f);
+//     V[1] = glm::vec4(v, 0.f);
+//     V[2] = glm::vec4(w, 0.f);
+//     V[3] = glm::vec4(-glm::dot(u, m_pos),
+//                      -glm::dot(v, m_pos),
+//                      -glm::dot(w, m_pos),
+//                      1.f);
+
+//     m_view = V;
+// }
+
 void Camera::rebuildView()
 {
-    // Build camera basis
-    glm::vec3 w = -glm::normalize(m_look);        // forward (camera space +z)
-    glm::vec3 u = glm::normalize(glm::cross(m_up, w)); // right
-    glm::vec3 v = glm::cross(w, u);               // true up
+    // Build camera basis from pose
+    glm::vec3 w = -glm::normalize(m_look);          // forward
+    glm::vec3 v = glm::normalize(m_up);             // up
+    glm::vec3 u = glm::normalize(glm::cross(v, w)); // right
+    v = glm::cross(w, u);                           // re-orthogonalize up
 
-    glm::mat4 V(1.f);
+    // Rotation part: rows [u; v; w] ⇒ columns are (u.x,u.y,u.z,0), etc.
+    glm::mat4 rot(1.f);
+    rot[0] = glm::vec4(u.x, v.x, w.x, 0.f);
+    rot[1] = glm::vec4(u.y, v.y, w.y, 0.f);
+    rot[2] = glm::vec4(u.z, v.z, w.z, 0.f);
 
-    // Columns because GLM is column-major
-    V[0] = glm::vec4(u, 0.f);
-    V[1] = glm::vec4(v, 0.f);
-    V[2] = glm::vec4(w, 0.f);
-    V[3] = glm::vec4(-glm::dot(u, m_pos),
-                     -glm::dot(v, m_pos),
-                     -glm::dot(w, m_pos),
-                     1.f);
+    // Translation part
+    glm::mat4 trans(1.f);
+    trans[3] = glm::vec4(-m_pos, 1.f);
 
-    m_view = V;
+    // View matrix = rotation * translation
+    m_view = rot * trans;
 }
+
 
 void Camera::setProjectionMatrix(float aspect,
                                  float nearPlane,

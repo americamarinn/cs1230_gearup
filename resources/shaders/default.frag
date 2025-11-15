@@ -133,3 +133,10 @@ void main() {
     // Debug option:
     // fragColor = vec4(abs(N), 1.0);
 }
+
+// void main() {
+//     // Flat debug color
+//     fragColor = vec4(1.0, 0.2, 0.2, 1.0);
+//     // Or: normals
+//     // fragColor = vec4(abs(normalize(wsNormal)), 1.0);
+// }
