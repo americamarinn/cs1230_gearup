@@ -57,6 +57,12 @@ https://github.com/BrownCSCI1230/projects_realtime_template/assets/45575415/710f
 
 ##### Your Output
 
+
+
+https://github.com/user-attachments/assets/e4ba8c11-4078-4b26-aacc-592b53f83ee8
+
+
+
 <!---
 Paste your output on top of this comment!
 -->
@@ -70,6 +76,11 @@ _Instructions:_ Load `chess.json`. Take a look around!
 https://github.com/BrownCSCI1230/projects_realtime_template/assets/45575415/a14f4d32-88ee-4f5f-9843-74dd5c89b9dd
 
 ##### Your Output
+
+
+
+https://github.com/user-attachments/assets/e8c9d857-3c10-4459-92c2-9cc513667cbf
+
 
 <!---
 Paste your output on top of this comment!
