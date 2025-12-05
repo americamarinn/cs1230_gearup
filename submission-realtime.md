@@ -79,6 +79,8 @@ To achieve the "Neon Glow" aesthetic, I completely refactored the rendering engi
 - Used code from Labs 9-11
 - I used ChatGPT (OpenAI, GPT-5, 2025) as a debugging/explanation tool, speciifcally to debug my numerous erros with gbuffers(creating debugging printlines, OpenGL knowledge and insite on error calls).
 - used some ai generated json files to test initial scenes.
+- https://learnopengl.com/Advanced-Lighting/Deferred-Shading
+- https://www.3dgep.com/forward-plus/
 
 **Specific ChatGPT Usage:**
 * **Translation:** Helped translate shader math and camera rotation formulas from lecture into GLSL/C++ code.
