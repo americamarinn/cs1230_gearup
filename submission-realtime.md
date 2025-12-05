@@ -21,6 +21,18 @@ Below are the renders from the custom Deferred Rendering pipeline implemented fo
 | **Retro Arcade**<br>`scenefiles/retro_arcade.json` | ![retro_arcade](proj6_output/retro_arcade.png) |
 | **The Hyper Tunnel**<br>`scenefiles/hyper_tunnel.json` | ![hyper_tunnel](proj6_output/hyper_tunnel.png) |
 
+### Functionality Demos
+
+#### Camera Translation
+_Demonstration of WASD movement logic implemented in `Realtime::updateCamera`._
+
+https://github.com/user-attachments/assets/e4ba8c11-4078-4b26-aacc-592b53f83ee8
+
+#### Camera Rotation
+_Demonstration of view rotation logic (Pitch/Yaw) implemented in `Realtime::mouseMoveEvent`._
+
+https://github.com/user-attachments/assets/e8c9d857-3c10-4459-92c2-9cc513667cbf
+
 ### Design Choices
 
 #### Base Architecture
@@ -79,4 +91,4 @@ N/A
 **Implemented Advanced Deferred Rendering Pipeline:**
 * **G-Buffer:** High-precision storage of Position, Normal, Albedo, and Emissive data.
 * **Post-Processing:** Implemented Bloom (Gaussian Blur), Tone Mapping (Reinhard), and Chromatic Aberration.
-* **Visual Effects:** Created specific "Neon" scenes (`hyper_tunnel.json`, `void_gate.json`, etc.) to demonstrate high-dynamic-range glow and reflection capabilities.
+* **Visual Effects:** Created specific "Neon" scenes (`hyper_tunnel.json`, `void_gate.json`) to demonstrate high-dynamic-range glow and reflection capabilities.
