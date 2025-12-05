@@ -23,15 +23,22 @@ Below are the renders from the custom Deferred Rendering pipeline implemented fo
 
 ### Functionality Demos
 
-#### Camera Translation
-_Demonstration of WASD movement logic implemented in `Realtime::updateCamera`._
+#### some cool recordings
 
-https://github.com/user-attachments/assets/e4ba8c11-4078-4b26-aacc-592b53f83ee8
+https://github.com/user-attachments/assets/4f9a0895-64a4-4608-8bfe-04d02cbdfe3e
 
-#### Camera Rotation
-_Demonstration of view rotation logic (Pitch/Yaw) implemented in `Realtime::mouseMoveEvent`._
 
-https://github.com/user-attachments/assets/e8c9d857-3c10-4459-92c2-9cc513667cbf
+
+https://github.com/user-attachments/assets/00ec12e8-c029-443d-a03a-7b7da92e778d
+
+
+
+https://github.com/user-attachments/assets/0650ccb7-8b9a-41f6-84c4-c4c14714fd81
+
+
+
+https://github.com/user-attachments/assets/c657054d-06d0-490a-bde8-c7bc3e3e917c
+
 
 ### Design Choices
 
@@ -68,26 +75,25 @@ To achieve the "Neon Glow" aesthetic, I completely refactored the rendering engi
     * **Chromatic Aberration:** Added a subtle RGB split offset at the edges to simulate a "glitchy" cyberpunk lens effect.
 
 ### Collaboration/References
-- Relied heavily on course lectures.
-- Used code from Labs 4, 8, and 10.
-- I used ChatGPT (OpenAI, GPT-5, 2025) as a debugging/explanation tool.
+- Built off of project 5 - Realtime 
+- Used code from Labs 9-11
+- I used ChatGPT (OpenAI, GPT-5, 2025) as a debugging/explanation tool, speciifcally to debug my numerous erros with gbuffers(creating debugging printlines, OpenGL knowledge and insite on error calls).
+- used some ai generated json files to test initial scenes.
 
 **Specific ChatGPT Usage:**
 * **Translation:** Helped translate shader math and camera rotation formulas from lecture into GLSL/C++ code.
 * **Debugging:** Assisted in debugging VAO/VBO mismatches and shape position errors in the fragment shader.
 * **Architecture:** Explained how to set up `glDrawBuffers` for the G-Buffer and how to implement Ping-Pong blurring.
-* **Integration:** Guided the integration of code from previous labs into this project.
 
 **Types of Prompts used:**
 * "Explain shader error: why is nothing appearing being colored in?"
-* "Help me implement camera movement."
 * "Let's test the setup with one shape first."
 * "How do I add a glow effect using Framebuffers?"
 
 ### Known Bugs
 N/A
 
-### Extra Credit
+### special features 
 **Implemented Advanced Deferred Rendering Pipeline:**
 * **G-Buffer:** High-precision storage of Position, Normal, Albedo, and Emissive data.
 * **Post-Processing:** Implemented Bloom (Gaussian Blur), Tone Mapping (Reinhard), and Chromatic Aberration.
