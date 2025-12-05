@@ -801,14 +801,241 @@ bool ScenefileReader::parseGroups(const QJsonValue &groups, SceneNode *parent) {
     return true;
 }
 
-/**
- * Parse an <object type="primitive"> tag into node.
- */
+// /**
+//  * Parse an <object type="primitive"> tag into node.
+//  */
+// bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
+//     QStringList requiredFields = {"type"};
+//     QStringList optionalFields = {
+//         "meshFile", "ambient", "diffuse", "specular", "reflective", "transparent", "shininess", "ior",
+//         "blend", "textureFile", "textureU", "textureV", "bumpMapFile", "bumpMapU", "bumpMapV"};
+
+//     QStringList allFields = requiredFields + optionalFields;
+//     for (auto field : prim.keys()) {
+//         if (!allFields.contains(field)) {
+//             std::cout << "unknown field \"" << field.toStdString() << "\" on primitive object" << std::endl;
+//             return false;
+//         }
+//     }
+//     for (auto field : requiredFields) {
+//         if (!prim.contains(field)) {
+//             std::cout << "missing required field \"" << field.toStdString() << "\" on primitive object" << std::endl;
+//             return false;
+//         }
+//     }
+
+//     if (!prim["type"].isString()) {
+//         std::cout << "primitive type must be of type string" << std::endl;
+//         return false;
+//     }
+//     std::string primType = prim["type"].toString().toStdString();
+
+//     // Default primitive
+//     ScenePrimitive *primitive = new ScenePrimitive();
+//     SceneMaterial &mat = primitive->material;
+//     mat.clear();
+//     primitive->type = PrimitiveType::PRIMITIVE_CUBE;
+//     mat.textureMap.isUsed = false;
+//     mat.bumpMap.isUsed = false;
+//     mat.cDiffuse.r = mat.cDiffuse.g = mat.cDiffuse.b = 1;
+//     node->primitives.push_back(primitive);
+
+//     std::filesystem::path basepath = std::filesystem::path(file_name).parent_path().parent_path();
+//     if (primType == "sphere")
+//         primitive->type = PrimitiveType::PRIMITIVE_SPHERE;
+//     else if (primType == "cube")
+//         primitive->type = PrimitiveType::PRIMITIVE_CUBE;
+//     else if (primType == "cylinder")
+//         primitive->type = PrimitiveType::PRIMITIVE_CYLINDER;
+//     else if (primType == "cone")
+//         primitive->type = PrimitiveType::PRIMITIVE_CONE;
+//     else if (primType == "mesh") {
+//         primitive->type = PrimitiveType::PRIMITIVE_MESH;
+//         if (!prim.contains("meshFile")) {
+//             std::cout << "primitive type mesh must contain field meshFile" << std::endl;
+//             return false;
+//         }
+//         if (!prim["meshFile"].isString()) {
+//             std::cout << "primitive meshFile must be of type string" << std::endl;
+//             return false;
+//         }
+
+//         std::filesystem::path relativePath(prim["meshFile"].toString().toStdString());
+//         primitive->meshfile = (basepath / relativePath).string();
+//     }
+//     else {
+//         std::cout << "unknown primitive type \"" << primType << "\"" << std::endl;
+//         return false;
+//     }
+
+//     if (prim.contains("ambient")) {
+//         if (!prim["ambient"].isArray()) {
+//             std::cout << "primitive ambient must be of type array" << std::endl;
+//             return false;
+//         }
+//         QJsonArray ambientArray = prim["ambient"].toArray();
+//         if (ambientArray.size() != 3) {
+//             std::cout << "primitive ambient array must be of size 3" << std::endl;
+//             return false;
+//         }
+
+//         for (int i = 0; i < 3; i++) {
+//             if (!ambientArray[i].isDouble()) {
+//                 std::cout << "primitive ambient must contain floating-point values" << std::endl;
+//                 return false;
+//             }
+
+//             mat.cAmbient[i] = ambientArray[i].toDouble();
+//         }
+//     }
+
+//     if (prim.contains("diffuse")) {
+//         if (!prim["diffuse"].isArray()) {
+//             std::cout << "primitive diffuse must be of type array" << std::endl;
+//             return false;
+//         }
+//         QJsonArray diffuseArray = prim["diffuse"].toArray();
+//         if (diffuseArray.size() != 3) {
+//             std::cout << "primitive diffuse array must be of size 3" << std::endl;
+//             return false;
+//         }
+
+//         for (int i = 0; i < 3; i++) {
+//             if (!diffuseArray[i].isDouble()) {
+//                 std::cout << "primitive diffuse must contain floating-point values" << std::endl;
+//                 return false;
+//             }
+
+//             mat.cDiffuse[i] = diffuseArray[i].toDouble();
+//         }
+//     }
+
+//     if (prim.contains("specular")) {
+//         if (!prim["specular"].isArray()) {
+//             std::cout << "primitive specular must be of type array" << std::endl;
+//             return false;
+//         }
+//         QJsonArray specularArray = prim["specular"].toArray();
+//         if (specularArray.size() != 3) {
+//             std::cout << "primitive specular array must be of size 3" << std::endl;
+//             return false;
+//         }
+
+//         for (int i = 0; i < 3; i++) {
+//             if (!specularArray[i].isDouble()) {
+//                 std::cout << "primitive specular must contain floating-point values" << std::endl;
+//                 return false;
+//             }
+
+//             mat.cSpecular[i] = specularArray[i].toDouble();
+//         }
+//     }
+
+//     if (prim.contains("reflective")) {
+//         if (!prim["reflective"].isArray()) {
+//             std::cout << "primitive reflective must be of type array" << std::endl;
+//             return false;
+//         }
+//         QJsonArray reflectiveArray = prim["reflective"].toArray();
+//         if (reflectiveArray.size() != 3) {
+//             std::cout << "primitive reflective array must be of size 3" << std::endl;
+//             return false;
+//         }
+
+//         for (int i = 0; i < 3; i++) {
+//             if (!reflectiveArray[i].isDouble()) {
+//                 std::cout << "primitive reflective must contain floating-point values" << std::endl;
+//                 return false;
+//             }
+
+//             mat.cReflective[i] = reflectiveArray[i].toDouble();
+//         }
+//     }
+
+//     if (prim.contains("transparent")) {
+//         if (!prim["transparent"].isArray()) {
+//             std::cout << "primitive transparent must be of type array" << std::endl;
+//             return false;
+//         }
+//         QJsonArray transparentArray = prim["transparent"].toArray();
+//         if (transparentArray.size() != 3) {
+//             std::cout << "primitive transparent array must be of size 3" << std::endl;
+//             return false;
+//         }
+
+//         for (int i = 0; i < 3; i++) {
+//             if (!transparentArray[i].isDouble()) {
+//                 std::cout << "primitive transparent must contain floating-point values" << std::endl;
+//                 return false;
+//             }
+
+//             mat.cTransparent[i] = transparentArray[i].toDouble();
+//         }
+//     }
+
+//     if (prim.contains("shininess")) {
+//         if (!prim["shininess"].isDouble()) {
+//             std::cout << "primitive shininess must be of type float" << std::endl;
+//             return false;
+//         }
+
+//         mat.shininess = (float) prim["shininess"].toDouble();
+//     }
+
+//     if (prim.contains("ior")) {
+//         if (!prim["ior"].isDouble()) {
+//             std::cout << "primitive ior must be of type float" << std::endl;
+//             return false;
+//         }
+
+//         mat.ior = (float) prim["ior"].toDouble();
+//     }
+
+//     if (prim.contains("blend")) {
+//         if (!prim["blend"].isDouble()) {
+//             std::cout << "primitive blend must be of type float" << std::endl;
+//             return false;
+//         }
+
+//         mat.blend = (float)prim["blend"].toDouble();
+//     }
+
+//     if (prim.contains("textureFile")) {
+//         if (!prim["textureFile"].isString()) {
+//             std::cout << "primitive textureFile must be of type string" << std::endl;
+//             return false;
+//         }
+//         std::filesystem::path fileRelativePath(prim["textureFile"].toString().toStdString());
+
+//         mat.textureMap.filename = (basepath / fileRelativePath).string();
+//         mat.textureMap.repeatU = prim.contains("textureU") && prim["textureU"].isDouble() ? prim["textureU"].toDouble() : 1;
+//         mat.textureMap.repeatV = prim.contains("textureV") && prim["textureV"].isDouble() ? prim["textureV"].toDouble() : 1;
+//         mat.textureMap.isUsed = true;
+//     }
+
+//     if (prim.contains("bumpMapFile")) {
+//         if (!prim["bumpMapFile"].isString()) {
+//             std::cout << "primitive bumpMapFile must be of type string" << std::endl;
+//             return false;
+//         }
+//         std::filesystem::path fileRelativePath(prim["bumpMapFile"].toString().toStdString());
+
+//         mat.bumpMap.filename = (basepath / fileRelativePath).string();
+//         mat.bumpMap.repeatU = prim.contains("bumpMapU") && prim["bumpMapU"].isDouble() ? prim["bumpMapU"].toDouble() : 1;
+//         mat.bumpMap.repeatV = prim.contains("bumpMapV") && prim["bumpMapV"].isDouble() ? prim["bumpMapV"].toDouble() : 1;
+//         mat.bumpMap.isUsed = true;
+//     }
+
+//     return true;
+// }
+
 bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
     QStringList requiredFields = {"type"};
+
+    // 🔧 FIX 1: Added "emissive" to this list
     QStringList optionalFields = {
-        "meshFile", "ambient", "diffuse", "specular", "reflective", "transparent", "shininess", "ior",
-        "blend", "textureFile", "textureU", "textureV", "bumpMapFile", "bumpMapU", "bumpMapV"};
+                                  "meshFile", "ambient", "diffuse", "specular", "emissive", "reflective", "transparent", "shininess", "ior",
+                                  "blend", "textureFile", "textureU", "textureV", "bumpMapFile", "bumpMapU", "bumpMapV"};
 
     QStringList allFields = requiredFields + optionalFields;
     for (auto field : prim.keys()) {
@@ -873,20 +1100,18 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             std::cout << "primitive ambient must be of type array" << std::endl;
             return false;
         }
-        QJsonArray ambientArray = prim["ambient"].toArray();
-        if (ambientArray.size() != 3) {
-            std::cout << "primitive ambient array must be of size 3" << std::endl;
+        QJsonArray ambient = prim["ambient"].toArray();
+        if (ambient.size() != 3) {
+            std::cout << "primitive ambient must have 3 elements" << std::endl;
             return false;
         }
-
-        for (int i = 0; i < 3; i++) {
-            if (!ambientArray[i].isDouble()) {
-                std::cout << "primitive ambient must contain floating-point values" << std::endl;
-                return false;
-            }
-
-            mat.cAmbient[i] = ambientArray[i].toDouble();
+        if (!ambient[0].isDouble() || !ambient[1].isDouble() || !ambient[2].isDouble()) {
+            std::cout << "primitive ambient must contain floating-point values" << std::endl;
+            return false;
         }
+        mat.cAmbient.r = ambient[0].toDouble();
+        mat.cAmbient.g = ambient[1].toDouble();
+        mat.cAmbient.b = ambient[2].toDouble();
     }
 
     if (prim.contains("diffuse")) {
@@ -894,20 +1119,18 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             std::cout << "primitive diffuse must be of type array" << std::endl;
             return false;
         }
-        QJsonArray diffuseArray = prim["diffuse"].toArray();
-        if (diffuseArray.size() != 3) {
-            std::cout << "primitive diffuse array must be of size 3" << std::endl;
+        QJsonArray diffuse = prim["diffuse"].toArray();
+        if (diffuse.size() != 3) {
+            std::cout << "primitive diffuse must have 3 elements" << std::endl;
             return false;
         }
-
-        for (int i = 0; i < 3; i++) {
-            if (!diffuseArray[i].isDouble()) {
-                std::cout << "primitive diffuse must contain floating-point values" << std::endl;
-                return false;
-            }
-
-            mat.cDiffuse[i] = diffuseArray[i].toDouble();
+        if (!diffuse[0].isDouble() || !diffuse[1].isDouble() || !diffuse[2].isDouble()) {
+            std::cout << "primitive diffuse must contain floating-point values" << std::endl;
+            return false;
         }
+        mat.cDiffuse.r = diffuse[0].toDouble();
+        mat.cDiffuse.g = diffuse[1].toDouble();
+        mat.cDiffuse.b = diffuse[2].toDouble();
     }
 
     if (prim.contains("specular")) {
@@ -915,20 +1138,38 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             std::cout << "primitive specular must be of type array" << std::endl;
             return false;
         }
-        QJsonArray specularArray = prim["specular"].toArray();
-        if (specularArray.size() != 3) {
-            std::cout << "primitive specular array must be of size 3" << std::endl;
+        QJsonArray specular = prim["specular"].toArray();
+        if (specular.size() != 3) {
+            std::cout << "primitive specular must have 3 elements" << std::endl;
             return false;
         }
-
-        for (int i = 0; i < 3; i++) {
-            if (!specularArray[i].isDouble()) {
-                std::cout << "primitive specular must contain floating-point values" << std::endl;
-                return false;
-            }
-
-            mat.cSpecular[i] = specularArray[i].toDouble();
+        if (!specular[0].isDouble() || !specular[1].isDouble() || !specular[2].isDouble()) {
+            std::cout << "primitive specular must contain floating-point values" << std::endl;
+            return false;
         }
+        mat.cSpecular.r = specular[0].toDouble();
+        mat.cSpecular.g = specular[1].toDouble();
+        mat.cSpecular.b = specular[2].toDouble();
+    }
+
+    // 🔧 FIX 2: Added logic to parse "emissive"
+    if (prim.contains("emissive")) {
+        if (!prim["emissive"].isArray()) {
+            std::cout << "primitive emissive must be of type array" << std::endl;
+            return false;
+        }
+        QJsonArray emissive = prim["emissive"].toArray();
+        if (emissive.size() != 3) {
+            std::cout << "primitive emissive must have 3 elements" << std::endl;
+            return false;
+        }
+        if (!emissive[0].isDouble() || !emissive[1].isDouble() || !emissive[2].isDouble()) {
+            std::cout << "primitive emissive must contain floating-point values" << std::endl;
+            return false;
+        }
+        mat.cEmissive.r = emissive[0].toDouble();
+        mat.cEmissive.g = emissive[1].toDouble();
+        mat.cEmissive.b = emissive[2].toDouble();
     }
 
     if (prim.contains("reflective")) {
@@ -936,20 +1177,18 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             std::cout << "primitive reflective must be of type array" << std::endl;
             return false;
         }
-        QJsonArray reflectiveArray = prim["reflective"].toArray();
-        if (reflectiveArray.size() != 3) {
-            std::cout << "primitive reflective array must be of size 3" << std::endl;
+        QJsonArray reflective = prim["reflective"].toArray();
+        if (reflective.size() != 3) {
+            std::cout << "primitive reflective must have 3 elements" << std::endl;
             return false;
         }
-
-        for (int i = 0; i < 3; i++) {
-            if (!reflectiveArray[i].isDouble()) {
-                std::cout << "primitive reflective must contain floating-point values" << std::endl;
-                return false;
-            }
-
-            mat.cReflective[i] = reflectiveArray[i].toDouble();
+        if (!reflective[0].isDouble() || !reflective[1].isDouble() || !reflective[2].isDouble()) {
+            std::cout << "primitive reflective must contain floating-point values" << std::endl;
+            return false;
         }
+        mat.cReflective.r = reflective[0].toDouble();
+        mat.cReflective.g = reflective[1].toDouble();
+        mat.cReflective.b = reflective[2].toDouble();
     }
 
     if (prim.contains("transparent")) {
@@ -957,20 +1196,18 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             std::cout << "primitive transparent must be of type array" << std::endl;
             return false;
         }
-        QJsonArray transparentArray = prim["transparent"].toArray();
-        if (transparentArray.size() != 3) {
-            std::cout << "primitive transparent array must be of size 3" << std::endl;
+        QJsonArray transparent = prim["transparent"].toArray();
+        if (transparent.size() != 3) {
+            std::cout << "primitive transparent must have 3 elements" << std::endl;
             return false;
         }
-
-        for (int i = 0; i < 3; i++) {
-            if (!transparentArray[i].isDouble()) {
-                std::cout << "primitive transparent must contain floating-point values" << std::endl;
-                return false;
-            }
-
-            mat.cTransparent[i] = transparentArray[i].toDouble();
+        if (!transparent[0].isDouble() || !transparent[1].isDouble() || !transparent[2].isDouble()) {
+            std::cout << "primitive transparent must contain floating-point values" << std::endl;
+            return false;
         }
+        mat.cTransparent.r = transparent[0].toDouble();
+        mat.cTransparent.g = transparent[1].toDouble();
+        mat.cTransparent.b = transparent[2].toDouble();
     }
 
     if (prim.contains("shininess")) {
@@ -978,8 +1215,7 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             std::cout << "primitive shininess must be of type float" << std::endl;
             return false;
         }
-
-        mat.shininess = (float) prim["shininess"].toDouble();
+        mat.shininess = (float)prim["shininess"].toDouble();
     }
 
     if (prim.contains("ior")) {
@@ -987,8 +1223,7 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             std::cout << "primitive ior must be of type float" << std::endl;
             return false;
         }
-
-        mat.ior = (float) prim["ior"].toDouble();
+        mat.ior = (float)prim["ior"].toDouble();
     }
 
     if (prim.contains("blend")) {
@@ -996,7 +1231,6 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             std::cout << "primitive blend must be of type float" << std::endl;
             return false;
         }
-
         mat.blend = (float)prim["blend"].toDouble();
     }
 
@@ -1006,7 +1240,6 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             return false;
         }
         std::filesystem::path fileRelativePath(prim["textureFile"].toString().toStdString());
-
         mat.textureMap.filename = (basepath / fileRelativePath).string();
         mat.textureMap.repeatU = prim.contains("textureU") && prim["textureU"].isDouble() ? prim["textureU"].toDouble() : 1;
         mat.textureMap.repeatV = prim.contains("textureV") && prim["textureV"].isDouble() ? prim["textureV"].toDouble() : 1;
@@ -1019,7 +1252,6 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
             return false;
         }
         std::filesystem::path fileRelativePath(prim["bumpMapFile"].toString().toStdString());
-
         mat.bumpMap.filename = (basepath / fileRelativePath).string();
         mat.bumpMap.repeatU = prim.contains("bumpMapU") && prim["bumpMapU"].isDouble() ? prim["bumpMapU"].toDouble() : 1;
         mat.bumpMap.repeatV = prim.contains("bumpMapV") && prim["bumpMapV"].isDouble() ? prim["bumpMapV"].toDouble() : 1;

@@ -20,7 +20,7 @@ void Camera::setViewMatrix(const glm::vec3 &pos,
     rebuildView();
 }
 
-
+//Moves world space to the camera view
 void Camera::rebuildView()
 {
     // Build camera basis from pose
@@ -65,6 +65,7 @@ void Camera::setProjectionMatrix(float aspect,
     float C = -(m_far + m_near) / (m_far - m_near);
     float D = -(2.f * m_far * m_near) / (m_far - m_near);
 
+    //Smae matrix as the one in lecture 2
     glm::mat4 P(0.f);
     P[0][0] = A;
     P[1][1] = B;
@@ -81,6 +82,7 @@ void Camera::translate(const glm::vec3 &delta)
     rebuildView();
 }
 
+//NODDING looking up and down
 void Camera::rotateAroundUp(float angle)
 {
     // yaw around world up (0,1,0)
@@ -96,6 +98,7 @@ void Camera::rotateAroundUp(float angle)
     rebuildView();
 }
 
+//PITCH looking left and right, you need to update up to keep orthogonal
 void Camera::rotateAroundRight(float angle)
 {
     glm::vec3 w = -glm::normalize(m_look);

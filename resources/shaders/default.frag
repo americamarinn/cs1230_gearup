@@ -35,7 +35,11 @@ struct Light {
 uniform int   numLights;
 uniform Light lights[8];
 
+// UP UNTIL NOW we are just collecting stuff from realtime.cpp
+
 // 1 / (a + b d + c d^2), clamped to [0,1]
+//distance attenuation 
+//for point and spot, get weaker as light is fartehr away. not a thing with directional
 float distanceFalloff(vec3 coeffs, float d) {
     float a = coeffs.x;
     float b = coeffs.y;
@@ -47,6 +51,7 @@ float distanceFalloff(vec3 coeffs, float d) {
 }
 
 // Smooth spotlight falloff between inner & outer angle
+//angle to azis is the angle between light direction and direction to the point
 float spotFalloff(float angleToAxis, float outerAngle, float penumbra) {
     float inner = outerAngle - penumbra;
     float outer = outerAngle;
@@ -60,10 +65,14 @@ float spotFalloff(float angleToAxis, float outerAngle, float penumbra) {
     return 1.0 - falloff;
 }
 
+//SPOTLIGHT = ATTENUATION * SPOTFALLOFF
+
 // Diffuse + specular from one light
 vec3 shadeOneLight(Light light, vec3 N, vec3 P, vec3 V) {
+    
+    //direction from point to light
     vec3 L;
-    float attenuation = 1.0;
+    float attenuation = 1.0; //standard att
 
     if (light.type == 0) {
         // point
@@ -82,12 +91,15 @@ vec3 shadeOneLight(Light light, vec3 N, vec3 P, vec3 V) {
         L = disp / dist;
 
         attenuation = distanceFalloff(light.atten, dist);
-
+        //for spotlights we need to get angle to axis and adjust attenuation 
         float angleToAxis = acos(dot(-L, normalize(light.dir)));
         attenuation *= spotFalloff(angleToAxis, light.angle, light.penumbra);
     }
 
+    
     float NdotL = max(dot(N, L), 0.0);
+    
+    //if light behind the surface
     if (NdotL <= 0.0) {
         return vec3(0.0);
     }
@@ -96,6 +108,9 @@ vec3 shadeOneLight(Light light, vec3 N, vec3 P, vec3 V) {
     vec3 diffuse  = k_d * cDiffuse * NdotL * light.color;
 
     // specular
+    // V = view direction, from point to camera
+    //R is a reflection of L about N
+    
     vec3 specular = vec3(0.0);
     if (shininess > 0.0 && k_s > 0.0) {
         vec3 R      = reflect(-L, N);
@@ -104,6 +119,7 @@ vec3 shadeOneLight(Light light, vec3 N, vec3 P, vec3 V) {
         specular    = k_s * cSpecular * sTerm * light.color;
     }
 
+    //each light will return its local phong contribution in RGB
     return attenuation * (diffuse + specular);
 }
 

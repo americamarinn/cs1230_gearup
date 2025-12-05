@@ -39,12 +39,12 @@ public:
 private:
     // Camera pose
     glm::vec3 m_pos{0.f, 0.f, 3.f};
-    glm::vec3 m_look{0.f, 0.f, -1.f};
-    glm::vec3 m_up{0.f, 1.f, 0.f};
+    glm::vec3 m_look{0.f, 0.f, -1.f}; //looking toward -z
+    glm::vec3 m_up{0.f, 1.f, 0.f}; //what up is.
 
     // Matrices
-    glm::mat4 m_view{1.f};
-    glm::mat4 m_proj{1.f};
+    glm::mat4 m_view{1.f}; //matrix that moves world into camera space
+    glm::mat4 m_proj{1.f}; //perspective projection matrix
 
     glm::mat4 m_projMatrix {1.0f};
     float m_nearPlane = 0.1f;
