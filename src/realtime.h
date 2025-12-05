@@ -73,6 +73,9 @@ private:
     GLuint m_pingpongColorbuffers[2]; // The textures
     GLuint m_blurShader;
     GLuint m_compositeShader; // Mixes scene + bloom
+
+    GLuint m_lightingFBO;
+    GLuint m_lightingTexture;
 };
 
 // #pragma once

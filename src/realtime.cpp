@@ -116,6 +116,10 @@ void Realtime::initializeGL() {
             data = c.generateShape();
         }
 
+        if (data.empty()) {
+            std::cerr << "⚠️ WARNING: Shape data is empty for primitive type " << (int)t << std::endl;
+        }
+
         GLuint vao, vbo;
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
@@ -147,6 +151,14 @@ void Realtime::initializeGL() {
     m_deferredShader = ShaderLoader::createShaderProgram(
         "resources/shaders/fullscreen_quad.vert",
         "resources/shaders/deferredLighting.frag");
+
+    m_blurShader = ShaderLoader::createShaderProgram(
+        "resources/shaders/fullscreen_quad.vert",
+        "resources/shaders/blur.frag");
+
+    m_compositeShader = ShaderLoader::createShaderProgram(
+        "resources/shaders/fullscreen_quad.vert",
+        "resources/shaders/composite.frag");
 
     // Set samplers for deferred shader once
     glUseProgram(m_deferredShader);
@@ -182,7 +194,39 @@ void Realtime::initializeGL() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // 4. Init GBuffer
-    m_gbuffer.init(width() * devicePixelRatio(), height() * devicePixelRatio());
+    int screenW = width() * devicePixelRatio();
+    int screenH = height() * devicePixelRatio();
+    m_gbuffer.init(screenW, screenH);
+
+    // 5. Init Post-Processing FBOs (Lighting & Blur)
+    // --- Lighting FBO ---
+    glGenFramebuffers(1, &m_lightingFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_lightingFBO);
+    glGenTextures(1, &m_lightingTexture);
+    glBindTexture(GL_TEXTURE_2D, m_lightingTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenW, screenH, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lightingTexture, 0);
+
+    // --- Ping Pong FBOs ---
+    glGenFramebuffers(2, m_pingpongFBO);
+    glGenTextures(2, m_pingpongColorbuffers);
+    for (unsigned int i = 0; i < 2; i++) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, m_pingpongColorbuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenW, screenH, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_pingpongColorbuffers[i], 0);
+    }
+
+    // Unbind
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     m_elapsedTimer.start();
     m_timer = startTimer(16);
@@ -309,10 +353,26 @@ void Realtime::initializeGL() {
 //     m_timer = startTimer(16);
 // }
 
-void Realtime::resizeGL(int w, int h) {
-    glViewport(0, 0, w, h);
-    m_gbuffer.resize(w * devicePixelRatio(), h * devicePixelRatio());
 
+void Realtime::resizeGL(int w, int h) {
+    int w_dpi = w * devicePixelRatio();
+    int h_dpi = h * devicePixelRatio();
+
+    glViewport(0, 0, w, h);
+
+    // Resize G-Buffer
+    m_gbuffer.resize(w_dpi, h_dpi);
+
+    // Resize Post-Process Textures
+    glBindTexture(GL_TEXTURE_2D, m_lightingTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, w_dpi, h_dpi, 0, GL_RGB, GL_FLOAT, NULL);
+
+    for (unsigned int i = 0; i < 2; i++) {
+        glBindTexture(GL_TEXTURE_2D, m_pingpongColorbuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, w_dpi, h_dpi, 0, GL_RGB, GL_FLOAT, NULL);
+    }
+
+    // Update Camera
     float aspectRatio = (float)w / (float)h;
     m_camera.setProjectionMatrix(
         aspectRatio,
@@ -322,17 +382,33 @@ void Realtime::resizeGL(int w, int h) {
         );
 }
 
+// void Realtime::resizeGL(int w, int h) {
+//     glViewport(0, 0, w, h);
+//     m_gbuffer.resize(w * devicePixelRatio(), h * devicePixelRatio());
+
+//     float aspectRatio = (float)w / (float)h;
+//     m_camera.setProjectionMatrix(
+//         aspectRatio,
+//         settings.nearPlane,
+//         settings.farPlane,
+//         m_renderData.cameraData.heightAngle
+//         );
+// }
+
 
 void Realtime::paintGL() {
     // Delta time
     float dt = m_elapsedTimer.restart() * 0.001f;
     updateCamera(dt);
 
+    int w_dpi = width() * devicePixelRatio();
+    int h_dpi = height() * devicePixelRatio();
+
     // ==========================================
     // PHASE 1: GEOMETRY PASS
+    // Render to G-Buffer
     // ==========================================
     m_gbuffer.bindForWriting();
-
     glViewport(0, 0, m_gbuffer.getWidth(), m_gbuffer.getHeight());
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -340,11 +416,9 @@ void Realtime::paintGL() {
 
     glUseProgram(m_gbufferShader);
 
-    // Camera Matrices
     glUniformMatrix4fv(glGetUniformLocation(m_gbufferShader, "view"), 1, GL_FALSE, &m_camera.getViewMatrix()[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_gbufferShader, "proj"), 1, GL_FALSE, &m_camera.getProjMatrix()[0][0]);
 
-    // Draw Shapes
     for (const auto& shape : m_renderData.shapes) {
         glUniformMatrix4fv(glGetUniformLocation(m_gbufferShader, "model"), 1, GL_FALSE, &shape.ctm[0][0]);
         glUniform3fv(glGetUniformLocation(m_gbufferShader, "albedo"), 1, &shape.primitive.material.cDiffuse[0]);
@@ -357,29 +431,25 @@ void Realtime::paintGL() {
 
     glDisable(GL_DEPTH_TEST);
 
-    // 🔧 CRITICAL FIX: Get the valid default FBO ID from Qt
-    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
-
     // ==========================================
     // PHASE 2: LIGHTING PASS
+    // Render to Intermediate FBO (m_lightingFBO)
     // ==========================================
-    glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT); // No depth clear needed for full screen quad
+    glBindFramebuffer(GL_FRAMEBUFFER, m_lightingFBO);
+    glViewport(0, 0, w_dpi, h_dpi);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(m_deferredShader);
 
-    // Bind Textures
+    // Bind G-Buffer Textures
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, m_gbuffer.getPositionTex());
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, m_gbuffer.getNormalTex());
     glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, m_gbuffer.getAlbedoTex());
     glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, m_gbuffer.getEmissiveTex());
 
-    // Uniforms
     glm::vec3 camPos = m_camera.getPosition();
     glUniform3fv(glGetUniformLocation(m_deferredShader, "camPos"), 1, &camPos[0]);
 
-    // Lights
     int numLights = std::min((int)m_renderData.lights.size(), 8);
     glUniform1i(glGetUniformLocation(m_deferredShader, "numLights"), numLights);
     glUniform1f(glGetUniformLocation(m_deferredShader, "k_a"), m_renderData.globalData.ka);
@@ -398,6 +468,56 @@ void Realtime::paintGL() {
         glUniform1f(glGetUniformLocation(m_deferredShader, (base + ".angle").c_str()), light.angle);
         glUniform1f(glGetUniformLocation(m_deferredShader, (base + ".penumbra").c_str()), light.penumbra);
     }
+
+    glBindVertexArray(m_quadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+
+    // ==========================================
+    // PHASE 3: BLUR PASS (PING-PONG)
+    // Blur the Emissive Texture
+    // ==========================================
+    bool horizontal = true, first_iteration = true;
+    int amount = 10; // Number of blur passes
+    glUseProgram(m_blurShader);
+
+    for (unsigned int i = 0; i < amount; i++) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_pingpongFBO[horizontal]);
+        glUniform1i(glGetUniformLocation(m_blurShader, "horizontal"), horizontal);
+
+        glActiveTexture(GL_TEXTURE0);
+        // First iteration: read from Emissive G-Buffer. Subsequent: read from other ping-pong.
+        glBindTexture(GL_TEXTURE_2D, first_iteration ? m_gbuffer.getEmissiveTex() : m_pingpongColorbuffers[!horizontal]);
+
+        glBindVertexArray(m_quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        horizontal = !horizontal;
+        first_iteration = false;
+    }
+    glBindVertexArray(0);
+
+    // ==========================================
+    // PHASE 4: COMPOSITE + TONE MAPPING
+    // Render to Screen
+    // ==========================================
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+    glViewport(0, 0, w_dpi, h_dpi);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(m_compositeShader);
+
+    // Texture 0: The Lit Scene (from Phase 2)
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_lightingTexture);
+    glUniform1i(glGetUniformLocation(m_compositeShader, "scene"), 0);
+
+    // Texture 1: The Blurred Glow (from Phase 3)
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_pingpongColorbuffers[!horizontal]);
+    glUniform1i(glGetUniformLocation(m_compositeShader, "bloomBlur"), 1);
+
+    glUniform1f(glGetUniformLocation(m_compositeShader, "exposure"), 1.0f);
 
     glBindVertexArray(m_quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
